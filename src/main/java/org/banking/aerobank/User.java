@@ -2,7 +2,7 @@ package org.banking.aerobank;
 
 import jakarta.persistence.*;
 
-import java.time.LocalDateTime;
+import java.util.List;
 
 
 @Entity
@@ -16,6 +16,28 @@ public class User {
     private String email;
     private String password;
     private double balance;
+
+    @OneToMany(mappedBy = "fromUser")
+    private List<Transaction> sentTransactions;
+
+    @OneToMany(mappedBy = "toUser")
+    private List<Transaction> receivedTransactions;
+
+    public List<Transaction> getReceivedTransactions() {
+        return receivedTransactions;
+    }
+
+    public void setReceivedTransactions(List<Transaction> receivedTransactions) {
+        this.receivedTransactions = receivedTransactions;
+    }
+
+    public List<Transaction> getSentTransactions() {
+        return sentTransactions;
+    }
+
+    public void setSentTransactions(List<Transaction> sentTransactions) {
+        this.sentTransactions = sentTransactions;
+    }
 
     public int getId() {
         return id;
