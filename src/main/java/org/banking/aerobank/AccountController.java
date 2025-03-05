@@ -100,7 +100,12 @@ public class AccountController {
         User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
 
         List<Transaction> transactions = transactionRepository.findAllByUser(user);
-        List<String> transactionsDetails = transactions.stream().map(t -> "From: " + t.getFromUser().getEmail() + " To: " + t.getToUser().getEmail() + " Amount: $" + t.getAmount()).toList();
-        return ResponseEntity.ok(transactionsDetails);
+        List<String> transactionsDetails = transactions.stream()
+                .map(t -> "From: " + (t.getFromUser() != null ? t.getFromUser().getEmail() : "N/A") +
+                        " To: " + (t.getToUser() != null ? t.getToUser().getEmail() : "N/A") +
+                        " Amount: $" + t.getAmount() +
+                        " Type: " + t.getType()
+                )
+                .toList();        return ResponseEntity.ok(transactionsDetails);
     }
 }
