@@ -16,6 +16,7 @@ public class User {
     private String email;
     private String password;
     private double balance;
+    private boolean active;
 
     @OneToMany(mappedBy = "fromUser")
     private List<Transaction> sentTransactions;
@@ -37,6 +38,14 @@ public class User {
 
     public void setSentTransactions(List<Transaction> sentTransactions) {
         this.sentTransactions = sentTransactions;
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
     }
 
     public int getId() {

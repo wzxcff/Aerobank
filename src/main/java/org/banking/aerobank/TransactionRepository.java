@@ -11,4 +11,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
 
     @Query("SELECT t FROM Transaction t WHERE t.fromUser = :user OR t.toUser = :user")
     List<Transaction> findAllByUser(@Param("user") User user);
+
+    void deleteByFromUser(User fromUser);
+    void deleteByToUser(User toUser);
 }

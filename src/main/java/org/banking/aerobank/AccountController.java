@@ -1,12 +1,16 @@
 package org.banking.aerobank;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("api/account")
@@ -27,13 +31,26 @@ public class AccountController {
 
     @GetMapping("/balance")
     public ResponseEntity<String> getBalance(@RequestBody User request_user) {
-        User user = userRepository.findByEmail(request_user.getEmail()).orElseThrow(() -> new RuntimeException("User not found"));
+        Optional<User> optionalUser = userRepository.findByEmail(request_user.getEmail());
+
+        if (optionalUser.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        }
+
+        User user = optionalUser.get();
+
         return ResponseEntity.ok("Balance: " + user.getBalance());
     }
 
     @PostMapping("/withdraw")
     public ResponseEntity<String> withdraw(@RequestBody WithdrawRequest withdrawRequest) {
-        User user = userRepository.findByEmail(withdrawRequest.getEmail()).orElseThrow(() -> new RuntimeException("User not found"));
+        Optional<User> optionalUser = userRepository.findByEmail(withdrawRequest.getEmail());
+
+        if (optionalUser.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        }
+
+        User user = optionalUser.get();
 
         if (user.getBalance() < withdrawRequest.getAmount()) {
             return ResponseEntity.badRequest().body("Not enough balance");
@@ -55,7 +72,14 @@ public class AccountController {
 
     @PostMapping("/deposit")
     public ResponseEntity<String> deposit(@RequestBody DepositRequest depositRequest) {
-        User toUser = userRepository.findByEmail(depositRequest.getEmail()).orElseThrow(() -> new RuntimeException("User not found"));
+        Optional<User> optionalToUser = userRepository.findByEmail(depositRequest.getEmail());
+
+        if (optionalToUser.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        }
+
+        User toUser = optionalToUser.get();
+
         toUser.setBalance(toUser.getBalance() + depositRequest.getAmount());
         userRepository.save(toUser);
 
@@ -74,8 +98,15 @@ public class AccountController {
 
     @PostMapping("/transaction")
     public ResponseEntity<String> addTransaction(@RequestBody TransferRequest transferRequest) {
-        User fromUser = userRepository.findByEmail(transferRequest.getFromEmail()).orElseThrow(() -> new RuntimeException("User not found"));
-        User toUser = userRepository.findByEmail(transferRequest.getToEmail()).orElseThrow(() -> new RuntimeException("User not found"));
+        Optional<User> optionalFromUser = userRepository.findByEmail(transferRequest.getFromEmail());
+        Optional<User> optionalToUser = userRepository.findByEmail(transferRequest.getToEmail());
+
+        if (optionalFromUser.isEmpty() || optionalToUser.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("One of the users not found.");
+        }
+
+        User fromUser = optionalFromUser.get();
+        User toUser = optionalToUser.get();
 
         if (fromUser.getBalance() < transferRequest.getAmount()) {
             return ResponseEntity.badRequest().body("Not enough balance");
@@ -96,16 +127,27 @@ public class AccountController {
     }
 
     @GetMapping("/transactions/{email}")
-    public ResponseEntity<List<String>> getTransactions(@PathVariable String email) {
-        User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
+    public ResponseEntity<List<TransactionInfo>> getTransactions(@PathVariable String email) {
+        Optional<User> optionalUser = userRepository.findByEmail(email);
+
+        if (optionalUser.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ArrayList<>());
+        }
+
+        User user = optionalUser.get();
 
         List<Transaction> transactions = transactionRepository.findAllByUser(user);
-        List<String> transactionsDetails = transactions.stream()
-                .map(t -> "From: " + (t.getFromUser() != null ? t.getFromUser().getEmail() : "N/A") +
-                        " To: " + (t.getToUser() != null ? t.getToUser().getEmail() : "N/A") +
-                        " Amount: $" + t.getAmount() +
-                        " Type: " + t.getType()
-                )
-                .toList();        return ResponseEntity.ok(transactionsDetails);
+
+        List<TransactionInfo> transactionInfos = transactions.stream()
+                .map(t -> new TransactionInfo(
+                        t.getFromUser() != null ? t.getFromUser().getEmail() : "N/A",
+                        t.getToUser() != null ? t.getToUser().getEmail() : "N/A",
+                        t.getAmount(),
+                        t.getType().toString(),
+                        t.getTimestamp()
+                ))
+                .toList();
+
+        return ResponseEntity.ok(transactionInfos);
     }
 }
