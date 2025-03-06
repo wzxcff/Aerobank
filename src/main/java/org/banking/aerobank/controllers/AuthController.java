@@ -1,6 +1,10 @@
-package org.banking.aerobank;
+package org.banking.aerobank.controllers;
 
 import jakarta.transaction.Transactional;
+import org.banking.aerobank.requests.ChangepasswordRequest;
+import org.banking.aerobank.repositories.TransactionRepository;
+import org.banking.aerobank.requests.User;
+import org.banking.aerobank.repositories.UserRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;

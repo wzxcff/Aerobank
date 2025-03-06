@@ -1,5 +1,6 @@
-package org.banking.aerobank;
+package org.banking.aerobank.repositories;
 
+import org.banking.aerobank.requests.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

@@ -1,8 +1,7 @@
-package org.banking.aerobank;
+package org.banking.aerobank.requests;
 
 import jakarta.persistence.*;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity

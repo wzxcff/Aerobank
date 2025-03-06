@@ -1,16 +1,16 @@
-package org.banking.aerobank;
+package org.banking.aerobank.controllers;
 
+import org.banking.aerobank.repositories.TransactionRepository;
+import org.banking.aerobank.repositories.UserRepository;
+import org.banking.aerobank.requests.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("api/account")

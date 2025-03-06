@@ -1,4 +1,4 @@
-package org.banking.aerobank;
+package org.banking.aerobank.requests;
 
 public class ChangepasswordRequest {
     private String email;

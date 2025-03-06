@@ -1,4 +1,4 @@
-package org.banking.aerobank;
+package org.banking.aerobank.requests;
 
 public class TransferRequest {
     private String fromEmail;
