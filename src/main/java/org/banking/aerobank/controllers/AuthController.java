@@ -56,7 +56,6 @@ public class AuthController {
         return ResponseEntity.ok("Login successful.");
     }
 
-    // FIXME: Fix ifs
     @PostMapping("/change_password")
     public ResponseEntity<String> changePassword(@RequestBody ChangepasswordRequest changepasswordRequest) {
         Optional<User> optionalUser = userRepository.findByEmail(changepasswordRequest.getEmail());
@@ -74,11 +73,15 @@ public class AuthController {
         }
 
         if (!changepasswordRequest.getNewPassword().equals(changepasswordRequest.getNewPasswordConfirm())) {
-            return ResponseEntity.badRequest().body("Passwords do not match.");
+            return ResponseEntity.badRequest().body("New passwords do not match.");
         }
 
-        if (user.getPassword().equals(changepasswordRequest.getNewPassword())) {
-            return ResponseEntity.badRequest().body("Passwords do not match.");
+        if (!passwordEncoder.matches(changepasswordRequest.getOldPassword(), user.getPassword())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Old passwords do not match.");
+        }
+
+        if (passwordEncoder.matches(changepasswordRequest.getNewPasswordConfirm(), user.getPassword())) {
+            return ResponseEntity.badRequest().body("Current password matches new password.");
         }
 
         user.setPassword(passwordEncoder.encode(changepasswordRequest.getNewPassword()));
