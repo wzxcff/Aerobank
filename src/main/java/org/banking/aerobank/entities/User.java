@@ -1,4 +1,4 @@
-package org.banking.aerobank.requests;
+package org.banking.aerobank.entities;
 
 import jakarta.persistence.*;
 
@@ -15,14 +15,18 @@ public class User {
     private String lastName;
     private String email;
     private String password;
-    private double balance;
     private boolean active;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Card> cards;
 
     @OneToMany(mappedBy = "fromUser")
     private List<Transaction> sentTransactions;
 
     @OneToMany(mappedBy = "toUser")
     private List<Transaction> receivedTransactions;
+
+
 
     public List<Transaction> getReceivedTransactions() {
         return receivedTransactions;
@@ -83,13 +87,4 @@ public class User {
     public void setPassword(String password) {
         this.password = password;
     }
-
-    public double getBalance() {
-        return balance;
-    }
-
-    public void setBalance(double balance) {
-        this.balance = balance;
-    }
-
 }

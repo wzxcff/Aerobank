@@ -1,4 +1,4 @@
-package org.banking.aerobank.requests;
+package org.banking.aerobank.entities;
 
 import jakarta.persistence.*;
 
