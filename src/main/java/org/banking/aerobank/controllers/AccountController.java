@@ -7,7 +7,6 @@ import org.banking.aerobank.repositories.CardRepository;
 import org.banking.aerobank.repositories.TransactionRepository;
 import org.banking.aerobank.repositories.UserRepository;
 import org.banking.aerobank.requests.*;
-import org.banking.aerobank.security.AESUtil;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCrypt;
@@ -58,24 +57,38 @@ public class AccountController {
 
         Card newCard = new Card();
         newCard.setUser(user);
-        newCard.setType(Card.CardType.valueOf(cardRequest.getType().toUpperCase()));
-        newCard.setTypeDesign(Card.CardTypeDesign.valueOf(cardRequest.getTypeDesign().toUpperCase()));
+
+        switch (cardRequest.getTypeDesign().toUpperCase()) {
+            case "YELLOW":
+                newCard.setType(Card.CardType.valueOf("DEBIT"));
+                newCard.setTypeDesign(Card.CardTypeDesign.YELLOW);
+                break;
+            case "GREEN":
+                newCard.setType(Card.CardType.valueOf("CREDIT"));
+                newCard.setTypeDesign(Card.CardTypeDesign.GREEN);
+                break;
+            case "BLACK":
+                newCard.setType(Card.CardType.valueOf("CREDIT"));
+                newCard.setTypeDesign(Card.CardTypeDesign.BLACK);
+        }
 
         newCard.setCardNumber(CardGenerator.generateCardNumber(cardRepository));
         newCard.setExpDate(CardGenerator.generateExpDate());
         newCard.setCvv(CardGenerator.generateCvv());
-        newCard.setPin(CardGenerator.generatePin());
+
+        String generatedPin = CardGenerator.generatePin();
+
+        newCard.setPin(generatedPin);
 
         newCard.setActive(true);
 
         cardRepository.save(newCard);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body("New card created");
+        return ResponseEntity.status(HttpStatus.CREATED).body("New card created!\nPIN: " + generatedPin);
     }
 
     // TODO: Create remove card method
 
-    // TEST
     @GetMapping("/cards")
     public ResponseEntity<?> getCards(@RequestBody GetCardsRequest request) {
         Optional<User> optionalUser = userRepository.findById(request.getUserId());
@@ -121,93 +134,128 @@ public class AccountController {
         return ResponseEntity.ok(balanceInfo);
     }
 
+    @PostMapping("/withdraw")
+    public ResponseEntity<String> withdraw(@RequestBody WithdrawRequest withdrawRequest) {
+        Optional<User> optionalUser = userRepository.findById(withdrawRequest.getUserId());
 
-//    // FIXME
-//    @PostMapping("/withdraw")
-//    public ResponseEntity<String> withdraw(@RequestBody WithdrawRequest withdrawRequest) {
-//        Optional<User> optionalUser = userRepository.findByEmail(withdrawRequest.getEmail());
-//
-//        if (optionalUser.isEmpty()) {
-//            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
-//        }
-//
-//        User user = optionalUser.get();
-//
-//        if (user.getBalance() < withdrawRequest.getAmount()) {
-//            return ResponseEntity.badRequest().body("Not enough balance");
-//        }
-//        user.setBalance(user.getBalance() - withdrawRequest.getAmount());
-//        userRepository.save(user);
-//
-//        Transaction transaction = new Transaction();
-//        transaction.setFromUser(user);
-//        transaction.setToUser(null);
-//        transaction.setAmount(withdrawRequest.getAmount());
-//        transaction.setTimestamp(LocalDateTime.now());
-//        transaction.setType(Transaction.TransactionType.WITHDRAWAL);
-//
-//        transactionRepository.save(transaction);
-//
-//        return ResponseEntity.ok("Withdrawn: " + withdrawRequest.getAmount());
-//    }
-//
-//    // FIXME
-//    @PostMapping("/deposit")
-//    public ResponseEntity<String> deposit(@RequestBody DepositRequest depositRequest) {
-//        Optional<User> optionalToUser = userRepository.findByEmail(depositRequest.getEmail());
-//
-//        if (optionalToUser.isEmpty()) {
-//            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
-//        }
-//
-//        User toUser = optionalToUser.get();
-//
-//        toUser.setBalance(toUser.getBalance() + depositRequest.getAmount());
-//        userRepository.save(toUser);
-//
-//
-//        Transaction transaction = new Transaction();
-//        transaction.setToUser(toUser);
-//        transaction.setFromUser(null);
-//        transaction.setAmount(depositRequest.getAmount());
-//        transaction.setTimestamp(LocalDateTime.now());
-//        transaction.setType(Transaction.TransactionType.DEPOSIT);
-//
-//        transactionRepository.save(transaction);
-//
-//        return ResponseEntity.ok("Deposit successful\n\nTo: " + toUser.getEmail() + "\nAmount: " + depositRequest.getAmount());
-//    }
-//
-//    // FIXME
-//    @PostMapping("/transaction")
-//    public ResponseEntity<String> addTransaction(@RequestBody TransferRequest transferRequest) {
-//        Optional<User> optionalFromUser = userRepository.findByEmail(transferRequest.getFromEmail());
-//        Optional<User> optionalToUser = userRepository.findByEmail(transferRequest.getToEmail());
-//
-//        if (optionalFromUser.isEmpty() || optionalToUser.isEmpty()) {
-//            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("One of the users not found.");
-//        }
-//
-//        User fromUser = optionalFromUser.get();
-//        User toUser = optionalToUser.get();
-//
-//        if (fromUser.getBalance() < transferRequest.getAmount()) {
-//            return ResponseEntity.badRequest().body("Not enough balance");
-//        }
-//
-//        fromUser.setBalance(fromUser.getBalance() - transferRequest.getAmount());
-//        toUser.setBalance(toUser.getBalance() + transferRequest.getAmount());
-//
-//        Transaction transaction = new Transaction();
-//        transaction.setFromUser(fromUser);
-//        transaction.setToUser(toUser);
-//        transaction.setAmount(transferRequest.getAmount());
-//        transaction.setTimestamp(LocalDateTime.now());
-//        transaction.setType(Transaction.TransactionType.TRANSFER);
-//
-//        transactionRepository.save(transaction);
-//        return ResponseEntity.ok("Transaction completed successfully\nFrom: " + fromUser.getEmail() + "\nTo: " + toUser.getEmail() + "\nAmount: " + transferRequest.getAmount());
-//    }
+        if (optionalUser.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        }
+
+        User user = optionalUser.get();
+
+        Optional<Card> optionalCard = cardRepository.findByCardNumber(withdrawRequest.getCardNumber());
+
+        if (optionalCard.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Card not found");
+        }
+
+        Card card = optionalCard.get();
+
+        if (!card.checkPin(withdrawRequest.getPin())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Pin is incorrect");
+        }
+
+        if (card.getBalance() < withdrawRequest.getAmount()) {
+            return ResponseEntity.badRequest().body("Not enough balance");
+        }
+
+        card.setBalance(card.getBalance() - withdrawRequest.getAmount());
+
+        Transaction transaction = new Transaction();
+        transaction.setFromUser(user);
+        transaction.setToUser(null);
+        transaction.setAmount(withdrawRequest.getAmount());
+        transaction.setTimestamp(LocalDateTime.now());
+        transaction.setType(Transaction.TransactionType.WITHDRAWAL);
+
+        transaction.setFromCard(withdrawRequest.getCardNumber());
+
+        transactionRepository.save(transaction);
+
+        return ResponseEntity.ok("Withdrawn: " + withdrawRequest.getAmount());
+    }
+
+    @PostMapping("/deposit")
+    public ResponseEntity<String> deposit(@RequestBody DepositRequest depositRequest) {
+        Optional<User> optionalToUser = userRepository.findById(depositRequest.getUserId());
+
+        if (optionalToUser.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        }
+
+        User user = optionalToUser.get();
+
+        Optional<Card> optionalCard = cardRepository.findByCardNumber(depositRequest.getCardNumber());
+
+        if (optionalCard.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Card not found");
+        }
+
+        Card card = optionalCard.get();
+
+        if (!card.checkPin(depositRequest.getPin())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Pin is incorrect");
+        }
+
+        card.setBalance(card.getBalance() + depositRequest.getAmount());
+
+        Transaction transaction = new Transaction();
+        transaction.setToUser(user);
+        transaction.setFromUser(null);
+        transaction.setAmount(depositRequest.getAmount());
+        transaction.setTimestamp(LocalDateTime.now());
+        transaction.setType(Transaction.TransactionType.DEPOSIT);
+
+        transaction.setToCard(depositRequest.getCardNumber());
+
+
+        transactionRepository.save(transaction);
+
+        return ResponseEntity.ok("Deposit successful\n\nAmount: " + depositRequest.getAmount());
+    }
+
+    @PostMapping("/transaction")
+    public ResponseEntity<String> addTransaction(@RequestBody TransferRequest transferRequest) {
+        Optional<User> optionalFromUser = userRepository.findById(transferRequest.getFromUserId());
+        Optional<User> optionalToUser = userRepository.findById(transferRequest.getFromUserId());
+
+        if (optionalFromUser.isEmpty() || optionalToUser.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("One of the users not found.");
+        }
+
+        User fromUser = optionalFromUser.get();
+        User toUser = optionalToUser.get();
+
+        Optional<Card> optionalFromCard = cardRepository.findByCardNumber(transferRequest.getFromCardNumber());
+        Optional<Card> optionalToCard = cardRepository.findByCardNumber(transferRequest.getToCardNumber());
+
+        if (optionalFromCard.isEmpty() || optionalToCard.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("One of the cards not found.");
+        }
+
+        Card fromCard = optionalFromCard.get();
+        Card toCard = optionalToCard.get();
+
+        if (fromCard.getBalance() < transferRequest.getAmount()) {
+            return ResponseEntity.badRequest().body("Not enough balance");
+        }
+
+        fromCard.setBalance(fromCard.getBalance() - transferRequest.getAmount());
+        toCard.setBalance(toCard.getBalance() + transferRequest.getAmount());
+
+        Transaction transaction = new Transaction();
+        transaction.setFromUser(fromUser);
+        transaction.setAmount(transferRequest.getAmount());
+        transaction.setTimestamp(LocalDateTime.now());
+        transaction.setType(Transaction.TransactionType.TRANSFER);
+
+        transaction.setFromCard(fromCard.getCardNumber());
+        transaction.setToCard(toCard.getCardNumber());
+
+        transactionRepository.save(transaction);
+        return ResponseEntity.ok("Transaction completed successfully\nFrom: " + fromUser.getEmail() + "\nTo: " + toUser.getEmail() + "\nAmount: " + transferRequest.getAmount());
+    }
 
     @GetMapping("/transactions/{email}")
     public ResponseEntity<List<TransactionInfo>> getTransactions(@PathVariable String email) {

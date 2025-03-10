@@ -8,6 +8,7 @@ import java.time.format.DateTimeFormatter;
 
 public class CardGenerator {
     private static final SecureRandom random = new SecureRandom();
+    private static final String bankPrefix = "5356";
 
     public static String generateCardNumber(CardRepository cardRepository) {
         String cardNumber;
@@ -20,7 +21,11 @@ public class CardGenerator {
     public static String generateRandomCardNumber() {
         int[] digits = new int[16];
 
-        for (int i = 0; i < 15; i++) {
+        for (int i = 0; i < 4; i++) {
+            digits[i] = Character.getNumericValue(bankPrefix.charAt(i));
+        }
+
+        for (int i = 4; i < 15; i++) {
             digits[i] = random.nextInt(10);
         }
 

@@ -2,7 +2,6 @@ package org.banking.aerobank.requests;
 
 public class CardRequest {
     private int userId;
-    private String type;
     private String typeDesign;
     private double balance;
 
@@ -20,14 +19,6 @@ public class CardRequest {
 
     public void setTypeDesign(String typeDesign) {
         this.typeDesign = typeDesign;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
     }
 
     public int getUserId() {

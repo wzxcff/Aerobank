@@ -1,24 +1,33 @@
 package org.banking.aerobank.requests;
 
 public class TransferRequest {
-    private String fromEmail;
-    private String toEmail;
+    private int fromUserId;
+    private String fromCardNumber;
+    private String toCardNumber;
     private double amount;
 
-    public String getFromEmail() {
-        return fromEmail;
+    public int getFromUserId() {
+        return fromUserId;
     }
 
-    public void setFromEmail(String fromEmail) {
-        this.fromEmail = fromEmail;
+    public void setFromUserId(int fromUserId) {
+        this.fromUserId = fromUserId;
     }
 
-    public String getToEmail() {
-        return toEmail;
+    public String getFromCardNumber() {
+        return fromCardNumber;
     }
 
-    public void setToEmail(String toEmail) {
-        this.toEmail = toEmail;
+    public void setFromCardNumber(String fromCardNumber) {
+        this.fromCardNumber = fromCardNumber;
+    }
+
+    public String getToCardNumber() {
+        return toCardNumber;
+    }
+
+    public void setToCardNumber(String toCardNumber) {
+        this.toCardNumber = toCardNumber;
     }
 
     public double getAmount() {

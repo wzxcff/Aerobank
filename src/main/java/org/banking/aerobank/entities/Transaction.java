@@ -26,6 +26,25 @@ public class Transaction {
     @JoinColumn(name = "to_user_id", nullable = true)
     private User toUser;
 
+    private String fromCard;
+    private String toCard;
+
+    public String getFromCard() {
+        return fromCard;
+    }
+
+    public void setFromCard(String fromCard) {
+        this.fromCard = fromCard;
+    }
+
+    public String getToCard() {
+        return toCard;
+    }
+
+    public void setToCard(String toCard) {
+        this.toCard = toCard;
+    }
+
     public Long getId() {
         return id;
     }
