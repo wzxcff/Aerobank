@@ -11,19 +11,19 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
-
+// 6227
 import java.util.Optional;
 
 @RestController
 @RequestMapping("api/auth")
-public class AuthController {
+public class UserController {
 
     private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
     private final UserRepository userRepository;
     private final JdbcTemplate jdbcTemplate;
     private final TransactionRepository transactionRepository;
 
-    public AuthController(UserRepository userRepository, JdbcTemplate jdbcTemplate, TransactionRepository transactionRepository) {
+    public UserController(UserRepository userRepository, JdbcTemplate jdbcTemplate, TransactionRepository transactionRepository) {
         this.userRepository = userRepository;
         this.jdbcTemplate = jdbcTemplate;
         this.transactionRepository = transactionRepository;

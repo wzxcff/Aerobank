@@ -9,7 +9,6 @@ import org.banking.aerobank.repositories.UserRepository;
 import org.banking.aerobank.requests.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -19,13 +18,13 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("api/account")
-public class AccountController {
+public class CardController {
 
     private final UserRepository userRepository;
     private final TransactionRepository transactionRepository;
     private final CardRepository cardRepository;
 
-    public AccountController(UserRepository userRepository, TransactionRepository transactionRepository, CardRepository cardRepository) {
+    public CardController(UserRepository userRepository, TransactionRepository transactionRepository, CardRepository cardRepository) {
         this.userRepository = userRepository;
         this.transactionRepository = transactionRepository;
         this.cardRepository = cardRepository;
@@ -87,7 +86,16 @@ public class AccountController {
         return ResponseEntity.status(HttpStatus.CREATED).body("New card created!\nPIN: " + generatedPin);
     }
 
-    // TODO: Create remove card method
+    @DeleteMapping("/remove_card")
+    public ResponseEntity<String> removeCard(@RequestBody RemoveCardRequest removeCardRequest) {
+        Optional<Card> optionalCard = cardRepository.findByCardNumber(removeCardRequest.getCardNumber());
+        if (optionalCard.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Card not found");
+        }
+        Card card = optionalCard.get();
+        cardRepository.delete(card);
+        return ResponseEntity.status(HttpStatus.OK).body("Card removed");
+    }
 
     @GetMapping("/cards")
     public ResponseEntity<?> getCards(@RequestBody GetCardsRequest request) {
